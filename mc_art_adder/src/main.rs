@@ -1,95 +1,17 @@
+// Declare the modules to link your other files
+mod painting;
+mod aspect_ratio;
+
+// Bring the necessary items into scope from your other files
+use crate::painting::{Painting, PaintingsList};
+use crate::aspect_ratio::AspectRatio;
+
+// Original use statements
 use std::fs;
 use std::path::Path;
 use image::DynamicImage;
 use image::GenericImageView;
-struct PaintingsList {
-    schema: String,
-    version: String,
-    id: String,
-    name: String,
-    description: String,
-    paintings: Vec<Painting>,
-}
-struct Painting {
-    id: String,
-    name: String,
-    artist: String,
-    width: u32,
-    height: u32,
-}
-
-
-// Ratio enum for image ratio operations
-pub enum AspectRatio {
-    Square,         // 1:1, 2:2, 3:3
-    Wide,           // 2:1, 4:2
-    LongRectangle,  // 4:3
-    Tall,           // 1:2
-    TallRectangle,  // 3:4
-}
-
-impl AspectRatio {
-
-    pub const ALL_RATIOS: [Self; 5] = [
-        Self::Square,
-        Self::Wide,
-        Self::LongRectangle,
-        Self::Tall,
-        Self::TallRectangle,
-    ];
-
-    pub fn get_scales(&self) -> &'static [[u32; 2]] {
-        match self {
-            AspectRatio::Square => &[[1, 1], [2, 2], [3, 3]],
-            AspectRatio::Wide => &[[2, 1], [4, 2]],
-            AspectRatio::LongRectangle => &[[4, 3]],
-            AspectRatio::Tall => &[[1, 2]],
-            AspectRatio::TallRectangle => &[[3, 4]],
-        }
-    }
-
-    pub fn crop_data(&self, image: &DynamicImage) -> [ u32; 4 ] {
-
-        let mut crop_dimensions: [ u32; 4 ] = [0; 4];
-        
-        // Get image dimensions
-        let (img_x, img_y) = image.dimensions();
-
-        // Define ratios for enum variants
-        let (ratio_x, ratio_y) = match self {
-            AspectRatio::Square       => (1, 1),
-            AspectRatio::Wide         => (2, 1),
-            AspectRatio::LongRectangle=> (4, 3),
-            AspectRatio::Tall         => (1, 2),
-            AspectRatio::TallRectangle=> (3, 4),
-        };
-
-        let is_crop_wider = (ratio_x as f32 / ratio_y as f32) /* Ratio of the crop */ >= (img_x as f32 / img_y as f32) /* Ratio of the image */ ;
-
-        let magic_number: u32 = match is_crop_wider {
-
-            //The crop is wider than the image
-            true => {
-                img_x / ratio_x as u32
-            },        
-
-            //The crop is taller than the image
-            false => {   
-                img_y / ratio_y as u32
-            }
-        };
-
-        crop_dimensions[0] = magic_number * ratio_x;
-        crop_dimensions[1] = magic_number * ratio_y;
-        crop_dimensions[2] = (img_x - crop_dimensions[0]) / 2;
-        crop_dimensions[3] = (img_y - crop_dimensions[1]) / 2;
-
-        return crop_dimensions;
-
-    }
-
-}
-
+use std::io;
 
 fn main() {
 
@@ -98,10 +20,32 @@ fn main() {
         image.crop_imm(crop_data[2], crop_data[3], crop_data[0], crop_data[1])
     }
 
+    // Creat an empty PaintingsList struct to fill in with data later
+    // This will error until you add `#[derive(Default)]` to the PaintingsList struct
+    let mut paintings_list = PaintingsList::default();
+
+    // Get paintings_list data from user
+
+    io::stdin()
+        .read_line(&mut paintings_list.id)
+        .expect("Failed to read line");
+    paintings_list.id = paintings_list.id.trim().to_string();
+    
+
+    io::stdin()
+        .read_line(&mut paintings_list.name)
+        .expect("Failed to read line");
+    paintings_list.name = paintings_list.name.trim().to_string();
+
+    io::stdin()
+        .read_line(&mut paintings_list.description)
+        .expect("Failed to read line");
+    paintings_list.description = paintings_list.description.trim().to_string();
+
     // Get the desired name of the output directory from the user
     todo!();
 
-        // Take in a directory of images and save the paths of each image to a vector
+    // Take in a directory of images and save the paths of each image to a vector
     todo!();
 
     /* Create the required file structures for the output directory
@@ -115,9 +59,8 @@ fn main() {
 
      */ 
     todo!();
-    /*  
     
-    For each image, spawn a rayon thread that does the following:
+    /* For each image, spawn a rayon thread that does the following:
         - Open the image
         - For each aspect ratio in AspectRatio::ALL_RATIOS:
             - Get the crop data
@@ -129,9 +72,6 @@ fn main() {
     */
     todo!();
 }
-
-
-
 
 
 
