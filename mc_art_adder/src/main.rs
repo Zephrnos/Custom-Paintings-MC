@@ -13,40 +13,45 @@ use image::DynamicImage;
 use image::GenericImageView;
 use std::io;
 
+
+// Function to get user input from the command line
+fn get_user_input(prompt: &str) -> String {
+    let mut input = String::new();
+    println!("{}", prompt);
+    io::stdin().read_line(&mut input).expect("Failed to read line");
+    input.trim().to_string()
+}
+
+// Crop function that takes an image and crop data, returns the cropped image
+fn crop(image: DynamicImage, crop_data: [u32; 4]) -> DynamicImage {
+    image.crop_imm(crop_data[2], crop_data[3], crop_data[0], crop_data[1])
+}
+
+
 fn main() {
 
-    // Crop function that takes an image and crop data, returns the cropped image
-    fn crop(image: DynamicImage, crop_data: [u32; 4]) -> DynamicImage {
-        image.crop_imm(crop_data[2], crop_data[3], crop_data[0], crop_data[1])
-    }
-
     // Creat an empty PaintingsList struct to fill in with data later
-    // This will error until you add `#[derive(Default)]` to the PaintingsList struct
     let mut paintings_list = PaintingsList::default();
 
     // Get paintings_list data from user
+    let schema = get_user_input("Enter schema URL:");
+    let version = get_user_input("Enter version:");
+    let id = get_user_input("Enter ID:");
+    let name = get_user_input("Enter name:");
+    let description = get_user_input("Enter description:");
 
-    io::stdin()
-        .read_line(&mut paintings_list.id)
-        .expect("Failed to read line");
-    paintings_list.id = paintings_list.id.trim().to_string();
-    
+    // Set the paintings_list data
+    paintings_list.set_schema(schema);
+    paintings_list.set_version(version);
+    paintings_list.set_id(id);
+    paintings_list.set_name(name);
+    paintings_list.set_description(description);
 
-    io::stdin()
-        .read_line(&mut paintings_list.name)
-        .expect("Failed to read line");
-    paintings_list.name = paintings_list.name.trim().to_string();
-
-    io::stdin()
-        .read_line(&mut paintings_list.description)
-        .expect("Failed to read line");
-    paintings_list.description = paintings_list.description.trim().to_string();
-
-    // Get the desired name of the output directory from the user
-    todo!();
+    // Create output directory
+    fs::create_dir_all("./output_dir").expect("Failed to create output directory");
 
     // Take in a directory of images and save the paths of each image to a vector
-    todo!();
+    fs::create_dir_all("./input_dir").expect("Failed to create output directory");
 
     /* Create the required file structures for the output directory
     

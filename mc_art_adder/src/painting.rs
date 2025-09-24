@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Default, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PaintingsList {
     pub schema: String,
     pub version: String,
@@ -21,42 +21,58 @@ pub struct Painting {
     pub height: u32,
 }
 
-trait PaintingsData {
-    fn set_id(&mut self, id: String);
-    fn set_name(&mut self, name: String);
-}
-
-impl PaintingsData for Painting {
-    fn set_id(&mut self, id: String) {
-        self.id = id;
-    }
-
-    fn set_name(&mut self, name: String) {
-        self.source_name = name;
-    }
-}
-impl PaintingsData for PaintingsList {
-    fn set_id(&mut self, id: String) {
-        self.id = id;
-    }
-
-    fn set_name(&mut self, name: String) {
-        self.name = name;
+impl Default for PaintingsList {
+    fn default() -> Self {
+        PaintingsList {
+            schema: "https://example.com/painting-schema.json".to_string(),
+            version: "1.0".to_string(),
+            id: "default_id".to_string(),
+            name: "Default Paintings List".to_string(),
+            description: "A default list of paintings.".to_string(),
+            paintings: Vec::new(),
+        }
     }
 }
 
 impl PaintingsList {
 
+    pub fn set_schema(&mut self, schema: String) {
+        self.schema = schema;
+    }
+
+    pub fn set_version(&mut self, version: String) {
+        self.version = version;
+    }
+
+    pub fn set_id(&mut self, id: String) {
+        self.id = id;
+    }
+
+    pub fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+
+    pub fn set_description(&mut self, description: String) {
+        self.description = description;
+    }
+
+    pub fn add_painting(&mut self, painting: Painting) {
+        self.paintings.push(painting);
+    }
+
 }
+
 
 impl Painting {
 
-    fn set_output_path() {
-        todo!()
+    pub fn new(id: String, source_name: String, output_path: String, aspect_data: [u32; 4]) -> Self {
+        Painting {
+            id,
+            source_name,
+            output_path,
+            width: aspect_data[0],
+            height: aspect_data[1],
+        }  
     }
 
-    fn set_ratio_dimensions(&mut self, width: u32, height: u32) {
-        self.width = width;
-        self.height = height;
-    }
 }
