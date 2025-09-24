@@ -46,39 +46,34 @@ impl PaintingsList {
     pub fn add_painting(&mut self, painting: Painting) { self.paintings.push(painting); }
 }
 
-impl Painting {
-    // This function is completely rewritten
-    pub fn new(filename: String, aspect_ratio: AspectRatio) -> Self {
-        // Get block dimensions from the aspect ratio
-        let (width, height) = aspect_ratio.block_dimensions();
+// src/painting.rs
 
-        // Get the filename without the extension (e.g., "Mona_Lisa_drawn_by_Leonardo_da_Vinci")
-        let file_stem = Path::new(&filename)
+impl Painting {
+    // The function signature is the same as our last change
+    pub fn new(original_filename: String, aspect_ratio: AspectRatio, painting_id: String) -> Self {
+        let (width, height) = aspect_ratio.block_dimensions();
+        let file_stem = Path::new(&original_filename)
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or_default();
 
-        // Split the name and artist based on "_drawn_by_"
         if let Some((name_part, artist_part)) = file_stem.rsplit_once("_drawn_by_") {
-            // Convert underscores to spaces for display
             let name = name_part.replace('_', " ");
-            let artist = artist_part.replace('_', " ");
 
-            // Create the JSON ID (e.g., "davinci_mona_lisa")
-            // This takes the last name of the artist for the ID.
-            let artist_id_part = artist
-                .split_whitespace()
-                .last()
-                .unwrap_or("")
-                .to_lowercase();
-                
-            let name_id_part = name_part.to_lowercase();
-            let id = format!("{}_{}", artist_id_part, name_id_part);
+            let artist_name_only = artist_part.split("__").next().unwrap_or(artist_part);
 
-            return Self { id, name, artist, width, height, };
+            let artist = artist_name_only.replace('_', " ");
+
+
+            return Self {
+                id: painting_id,
+                name,
+                artist,
+                width,
+                height,
+            };
         }
 
-        // If the filename does not match the format, return a default Painting.
         Painting::default()
     }
 }

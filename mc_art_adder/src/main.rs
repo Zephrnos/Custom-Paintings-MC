@@ -62,15 +62,20 @@ fn main() {
             for aspect_ratio in AspectRatio::ALL_RATIOS.iter() {
                 let crop_data = aspect_ratio.crop_data(&img);
                 let cropped_img = crop(img.clone(), crop_data);
-                
-                // Create a clean filename for the output image
+
+                // Get the original filename without the extension
                 let file_stem = path.file_stem().unwrap().to_str().unwrap();
-                let output_path = format!("./output_dir/images/{}_{}.png", file_stem, aspect_ratio.name());
-                
-                // Save as PNG to preserve quality
+
+                // 1. Create the new ID from the original filename and the aspect ratio name
+                let painting_id = format!("{}_{}", file_stem, aspect_ratio.name());
+
+                // 2. Use this exact ID to create the output file path
+                let output_path = format!("./output_dir/images/{}.png", painting_id);
+
                 cropped_img.save(&output_path).expect("Failed to save cropped image");
 
-                let painting = Painting::new(filename.clone(), *aspect_ratio);
+                // 3. Pass the original filename, aspect ratio, AND the new ID to the constructor
+                let painting = Painting::new(filename.clone(), *aspect_ratio, painting_id);
                 paintings_list.add_painting(painting);
             }
         }
@@ -81,7 +86,7 @@ fn main() {
         .expect("Failed to serialize data to JSON");
 
     // Define the path for the output JSON file
-    let json_path = "./output_dir/images.json";
+    let json_path = "./output_dir/custompaintings.json";
 
     // Write the JSON string to the file
     fs::write(json_path, &json_output)
