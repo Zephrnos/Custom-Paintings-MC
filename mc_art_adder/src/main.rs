@@ -8,11 +8,9 @@ use crate::aspect_ratio::AspectRatio;
 
 // Original use statements
 use std::fs;
-use std::path::Path;
 use image::DynamicImage;
-use image::GenericImageView;
 use std::io;
-
+use serde_json; // <-- ADD THIS LINE
 
 // Function to get user input from the command line
 fn get_user_input(prompt: &str) -> String {
@@ -27,9 +25,7 @@ fn crop(image: DynamicImage, crop_data: [u32; 4]) -> DynamicImage {
     image.crop_imm(crop_data[2], crop_data[3], crop_data[0], crop_data[1])
 }
 
-
 fn main() {
-
     // Creat an empty PaintingsList struct to fill in with data later
     let mut paintings_list = PaintingsList::default();
 
@@ -47,39 +43,53 @@ fn main() {
     paintings_list.set_name(name);
     paintings_list.set_description(description);
 
-    // Create output directory
-    fs::create_dir_all("./output_dir").expect("Failed to create output directory");
+    fs::create_dir_all("./output_dir/images").expect("Failed to create output directory");
+    fs::create_dir_all("./input_dir").expect("Failed to create input directory");
 
-    // Take in a directory of images and save the paths of each image to a vector
-    fs::create_dir_all("./input_dir").expect("Failed to create output directory");
+    println!("\nPut images into input_dir and press Enter to continue...");
+    let _ = io::stdin().read_line(&mut String::new());
+    println!("Processing images...");
 
-    /* Create the required file structures for the output directory
-    
-        current_dir/
-            images.json
-            output_dir/
-                image1.png
-                image2.png
-                ...
+    // Read all image files from the input directory
+    for image in fs::read_dir("./input_dir").expect("Failed to read input directory") {
+        let image = image.expect("Failed to read image");
+        let path = image.path();
+        if path.is_file() {
+            let img = image::open(&path).expect("Failed to open image");
+            let filename = path.file_name().unwrap().to_str().unwrap().to_string();
 
-     */ 
-    todo!();
-    
-    /* For each image, spawn a rayon thread that does the following:
-        - Open the image
-        - For each aspect ratio in AspectRatio::ALL_RATIOS:
-            - Get the crop data
-            - Crop the image
-            - Save the cropped image to the output directory with a name indicating the aspect ratio
-            - Add an entry to images.json with the image name and aspect ratio and path
-        - End the thread
+            // For each aspect ratio, crop and save the image
+            for aspect_ratio in AspectRatio::ALL_RATIOS.iter() {
+                let crop_data = aspect_ratio.crop_data(&img);
+                let cropped_img = crop(img.clone(), crop_data);
+                
+                // Create a clean filename for the output image
+                let file_stem = path.file_stem().unwrap().to_str().unwrap();
+                let output_path = format!("./output_dir/images/{}_{}.png", file_stem, aspect_ratio.name());
+                
+                // Save as PNG to preserve quality
+                cropped_img.save(&output_path).expect("Failed to save cropped image");
 
-    */
-    todo!();
+                let painting = Painting::new(filename.clone(), *aspect_ratio);
+                paintings_list.add_painting(painting);
+            }
+        }
+    }
+
+    // Serialize the paintings_list struct into a nicely formatted JSON string
+    let json_output = serde_json::to_string_pretty(&paintings_list)
+        .expect("Failed to serialize data to JSON");
+
+    // Define the path for the output JSON file
+    let json_path = "./output_dir/images.json";
+
+    // Write the JSON string to the file
+    fs::write(json_path, &json_output)
+        .expect("Failed to write JSON to file");
+
+    println!("\n Success! Cropped images and {} created in ./output_dir", "images.json");
+
 }
-
-
-
 
 
 #[cfg(test)]

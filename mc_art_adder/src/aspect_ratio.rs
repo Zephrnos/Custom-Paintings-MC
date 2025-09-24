@@ -12,6 +12,17 @@ pub enum AspectRatio {
 }
 
 impl AspectRatio {
+
+    pub fn block_dimensions(&self) -> (u32, u32) {
+        match self {
+            AspectRatio::Square => (1, 1),
+            AspectRatio::Wide => (2, 1),
+            AspectRatio::LongRectangle => (4, 3),
+            AspectRatio::Tall => (1, 2),
+            AspectRatio::TallRectangle => (3, 4),
+        }
+    }
+
     pub const ALL_RATIOS: [Self; 5] = [
         Self::Square,
         Self::Wide,
@@ -52,4 +63,5 @@ impl AspectRatio {
         crop_dimensions[3] = (img_y - crop_dimensions[1]) / 2;
         crop_dimensions
     }
+
 }
