@@ -17,7 +17,7 @@ pub struct PaintingsList {
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct Painting {
     pub id: String,
-    pub filename: String, // <-- ADDED: To link to the image file
+    pub filename: String,
     pub name: String,
     pub artist: String,
     pub width: u32,
@@ -47,34 +47,40 @@ impl PaintingsList {
 }
 
 impl Painting {
-    // MODIFIED: The function signature is updated to build the painting correctly.
+    // This is the corrected, working function
     pub fn new(
         original_filename: String,
         width: u32,
         height: u32,
         painting_id: String,
-        image_filename: String, // <-- ADDED parameter
+        image_filename: String,
     ) -> Self {
         let file_stem = Path::new(&original_filename)
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or_default();
 
-        if let Some((name_part, artist_part)) = file_stem.rsplit_once("_drawn_by_") {
-            let name = name_part.replace('_', " ");
-            let artist_name_only = artist_part.split("__").next().unwrap_or(artist_part);
-            let artist = artist_name_only.replace('_', " ");
+        // 1. Declare variables in the outer scope
+        let (name, artist);
 
-            return Self {
-                id: painting_id,
-                filename: image_filename, // <-- SET the new filename field
-                name,
-                artist,
-                width,  // Use the passed-in width
-                height, // Use the passed-in height
-            };
+        // 2. Assign values inside the if/else branches
+        if let Some((name_part, artist_part)) = file_stem.rsplit_once("_drawn_by_") {
+            name = name_part.replace('_', " ");
+            let artist_name_only = artist_part.split("__").next().unwrap_or(artist_part);
+            artist = artist_name_only.replace('_', " ");
+        } else {
+            name = file_stem.replace('_', " ");
+            artist = "Unknown".to_string();
         }
 
-        Painting::default()
+        // 3. Build the struct once at the end, where `name` and `artist` are visible
+        Self {
+            id: painting_id,
+            filename: image_filename,
+            name,
+            artist,
+            width,
+            height,
+        }
     }
 }
