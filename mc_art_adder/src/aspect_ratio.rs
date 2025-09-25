@@ -12,14 +12,14 @@ pub enum AspectRatio {
 }
 
 impl AspectRatio {
-
-    pub fn block_dimensions(&self) -> (u32, u32) {
+    // MODIFIED: This now returns a Vec of dimensions for each aspect ratio.
+    pub fn block_dimensions(&self) -> Vec<(u32, u32)> {
         match self {
-            AspectRatio::Square => (1, 1),
-            AspectRatio::Wide => (2, 1),
-            AspectRatio::LongRectangle => (4, 3),
-            AspectRatio::Tall => (1, 2),
-            AspectRatio::TallRectangle => (3, 4),
+            AspectRatio::Square => vec![(1, 1), (2, 2), (3, 3), (4, 4)],
+            AspectRatio::Wide => vec![(2, 1), (4, 2)],
+            AspectRatio::LongRectangle => vec![(4, 3)],
+            AspectRatio::Tall => vec![(1, 2), (2, 4)],
+            AspectRatio::TallRectangle => vec![(3, 4)],
         }
     }
 
@@ -63,5 +63,4 @@ impl AspectRatio {
         crop_dimensions[3] = (img_y - crop_dimensions[1]) / 2;
         crop_dimensions
     }
-
 }

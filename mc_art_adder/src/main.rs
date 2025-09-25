@@ -26,17 +26,14 @@ fn crop(image: DynamicImage, crop_data: [u32; 4]) -> DynamicImage {
 }
 
 fn main() {
-    // Creat an empty PaintingsList struct to fill in with data later
     let mut paintings_list = PaintingsList::default();
 
-    // Get paintings_list data from user
     let schema = get_user_input("Enter schema URL:");
     let version = get_user_input("Enter version:");
     let id = get_user_input("Enter ID:");
     let name = get_user_input("Enter name:");
     let description = get_user_input("Enter description:");
 
-    // Set the paintings_list data
     paintings_list.set_schema(schema);
     paintings_list.set_version(version);
     paintings_list.set_id(id);
@@ -45,57 +42,70 @@ fn main() {
 
     fs::create_dir_all("./output_dir/images").expect("Failed to create output directory");
     fs::create_dir_all("./input_dir").expect("Failed to create input directory");
+    fs::copy("icon.png", "./output_dir/icon.png").expect("Failed to copy icon.png");
 
     println!("\nPut images into input_dir and press Enter to continue...");
     let _ = io::stdin().read_line(&mut String::new());
     println!("Processing images...");
 
-    // Read all image files from the input directory
     for image in fs::read_dir("./input_dir").expect("Failed to read input directory") {
         let image = image.expect("Failed to read image");
         let path = image.path();
         if path.is_file() {
             let img = image::open(&path).expect("Failed to open image");
-            let filename = path.file_name().unwrap().to_str().unwrap().to_string();
+            let original_filename_str = path.file_name().unwrap().to_str().unwrap().to_string();
 
-            // For each aspect ratio, crop and save the image
+            // --- CHANGE 1: Trim numerical ID from the original file stem ---
+            let file_stem = path.file_stem().unwrap().to_str().unwrap();
+
             for aspect_ratio in AspectRatio::ALL_RATIOS.iter() {
-                let crop_data = aspect_ratio.crop_data(&img);
-                let cropped_img = crop(img.clone(), crop_data);
+                // The crop operation is the same for all variants of a ratio, so we do it once.
+                let cropped_img = crop(img.clone(), aspect_ratio.crop_data(&img));
 
-                // Get the original filename without the extension
-                let file_stem = path.file_stem().unwrap().to_str().unwrap();
+                // --- CHANGE 2: Image saving is now inside this loop to create separate files ---
+                for (width, height) in aspect_ratio.block_dimensions() {
+                    
+                    // 1. Create a unique filename and ID for this specific size variant.
+                    //    e.g., "my_art_by_artist_square_1x1"
+                    let variant_id_and_filename_stem = format!(
+                        "{}_{}_{}x{}",
+                        file_stem,
+                        aspect_ratio.name(),
+                        width,
+                        height
+                    );
 
-                // 1. Create the new ID from the original filename and the aspect ratio name
-                let painting_id = format!("{}_{}", file_stem, aspect_ratio.name());
+                    let image_filename_with_ext = format!("{}.png", variant_id_and_filename_stem);
+                    let output_path = format!("./output_dir/images/{}", image_filename_with_ext);
 
-                // 2. Use this exact ID to create the output file path
-                let output_path = format!("./output_dir/images/{}.png", painting_id);
+                    // 2. Save a separate image file for this variant.
+                    cropped_img
+                        .save(&output_path)
+                        .expect("Failed to save cropped image");
 
-                cropped_img.save(&output_path).expect("Failed to save cropped image");
-
-                // 3. Pass the original filename, aspect ratio, AND the new ID to the constructor
-                let painting = Painting::new(filename.clone(), *aspect_ratio, painting_id);
-                paintings_list.add_painting(painting);
+                    // 3. Create the Painting struct, using the new unique ID and filename.
+                    let painting = Painting::new(
+                        original_filename_str.clone(), // Original filename for parsing artist/name
+                        width,
+                        height,
+                        variant_id_and_filename_stem.clone(), // The unique ID for this JSON entry
+                        image_filename_with_ext.clone(),      // The unique filename for the image
+                    );
+                    paintings_list.add_painting(painting);
+                }
             }
         }
     }
 
-    // Serialize the paintings_list struct into a nicely formatted JSON string
     let json_output = serde_json::to_string_pretty(&paintings_list)
         .expect("Failed to serialize data to JSON");
 
-    // Define the path for the output JSON file
     let json_path = "./output_dir/custompaintings.json";
-
-    // Write the JSON string to the file
     fs::write(json_path, &json_output)
         .expect("Failed to write JSON to file");
 
     println!("\n Success! Cropped images and {} created in ./output_dir", "images.json");
-
 }
-
 
 #[cfg(test)]
 mod tests {

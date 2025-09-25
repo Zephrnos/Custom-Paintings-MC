@@ -1,12 +1,11 @@
 // src/painting.rs
 
-use crate::aspect_ratio::AspectRatio; // Import AspectRatio
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PaintingsList {
-    #[serde(rename = "$schema")] // Renames 'schema' to '$schema' in JSON output
+    #[serde(rename = "$schema")]
     pub schema: String,
     pub version: String,
     pub id: String,
@@ -18,6 +17,7 @@ pub struct PaintingsList {
 #[derive(Serialize, Deserialize, Default, Debug)]
 pub struct Painting {
     pub id: String,
+    pub filename: String, // <-- ADDED: To link to the image file
     pub name: String,
     pub artist: String,
     pub width: u32,
@@ -46,12 +46,15 @@ impl PaintingsList {
     pub fn add_painting(&mut self, painting: Painting) { self.paintings.push(painting); }
 }
 
-// src/painting.rs
-
 impl Painting {
-    // The function signature is the same as our last change
-    pub fn new(original_filename: String, aspect_ratio: AspectRatio, painting_id: String) -> Self {
-        let (width, height) = aspect_ratio.block_dimensions();
+    // MODIFIED: The function signature is updated to build the painting correctly.
+    pub fn new(
+        original_filename: String,
+        width: u32,
+        height: u32,
+        painting_id: String,
+        image_filename: String, // <-- ADDED parameter
+    ) -> Self {
         let file_stem = Path::new(&original_filename)
             .file_stem()
             .and_then(|s| s.to_str())
@@ -59,18 +62,16 @@ impl Painting {
 
         if let Some((name_part, artist_part)) = file_stem.rsplit_once("_drawn_by_") {
             let name = name_part.replace('_', " ");
-
             let artist_name_only = artist_part.split("__").next().unwrap_or(artist_part);
-
             let artist = artist_name_only.replace('_', " ");
-
 
             return Self {
                 id: painting_id,
+                filename: image_filename, // <-- SET the new filename field
                 name,
                 artist,
-                width,
-                height,
+                width,  // Use the passed-in width
+                height, // Use the passed-in height
             };
         }
 
