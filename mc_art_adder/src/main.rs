@@ -42,7 +42,7 @@ fn main() {
 
     fs::create_dir_all("./output_dir/images").expect("Failed to create output directory");
     fs::create_dir_all("./input_dir").expect("Failed to create input directory");
-    fs::copy("icon.png", "./output_dir/icon.png").expect("Failed to copy icon.png");
+    fs::copy("./icon.png", "./output_dir/icon.png").expect("Failed to copy icon.png");
 
     println!("\nPut images into input_dir and press Enter to continue...");
     let _ = io::stdin().read_line(&mut String::new());
